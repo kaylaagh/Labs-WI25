@@ -23,7 +23,8 @@ class Node:
             end (Node): the end node
         """
         # TODO your code here
-        ...
+        self.children.append(end)
+        end.parents.append(self)
 
     def add_undirected_edge(self, end: "Node"):
         """
@@ -35,7 +36,8 @@ class Node:
             end (Node): the end node
         """
         # TODO your code here
-        ...
+        self.add_directed_edge(end)
+        end.add_directed_edge(self)
 
     def __repr__(self):
         """String representation of the node"""
@@ -85,7 +87,13 @@ class Graph:
             directed (bool): whether the edge is directed or not, default is True
         """
         # TODO your code here
-        ...
+        self.nodes.add(start)
+        self.nodes.add(end)
+
+        if directed:
+            start.add_directed_edge(end)
+        else:
+            start.add_undirected_edge(end)
 
 
 class Tree(Graph):
@@ -111,8 +119,32 @@ class Tree(Graph):
         Returns: (bool) whether the tree is valid or not
         """
         # TODO your code here
-        ...
+        if not self.root:
+            return False
+        
+        root_nodes = []
+        for node in self.nodes:
+            if not node.parents:
+                root_nodes.append(node)
+        if len(root_nodes) != 1:
+            return False
+        
+        visited = []
+        stack = [self.root]
 
+        while stack:
+            node = stack.pop()
+            visited.append(node)
+            for neighbor in node.children[::-1]:
+                if neighbor not in visited and neighbor not in stack:
+                    stack.append(neighbor)
+        if len(visited) != len(self.nodes):
+            return False
+        for node in self.nodes:
+            for child in node.children:
+                if child in visited and visited.count(child) > 1:
+                    return False
+        return True
 
 class BinaryTreeNode(Node):
     """Node that has at most two children, left and right"""
@@ -154,7 +186,27 @@ class BinarySearchTree(Tree):
             return
         current = self.root
         # TODO your code here
-        ...
+        if not self.root:
+            self.root = node
+            self.nodes.add(node)
+            return
+
+        current = self.root
+        while True:
+            if node.value < current.value:
+                if current.left:
+                    current = current.left
+                else:
+                    current.add_left_child(node)
+                    self.nodes.add(node)
+                    break
+            else:
+                if current.right:
+                    current = current.right
+                else:
+                    current.add_right_child(node)
+                    self.nodes.add(node)
+                    break
 
     def validate_bst(self) -> bool:
         """
@@ -168,4 +220,18 @@ class BinarySearchTree(Tree):
             - The right child of a node must be greater than the parent node
         """
         # TODO your code here
-        ...
+        check = self.validate_tree()
+
+        if not check:
+            return False
+        
+        for node in self.nodes:
+            if len(node.children) > 2:
+                return False
+            
+            for child in node.children:
+                if child.value < node.value and child != node.left:
+                    return False
+                elif child.value > node.value and child != node.right:
+                    return False
+        return True
