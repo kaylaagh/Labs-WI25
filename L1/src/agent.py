@@ -61,9 +61,27 @@ class TrivialVacuumEnvironment:
         >>> assert env.status == {loc_A: 'Clean', loc_B: 'Clean'}
         >>> assert agent.performance == 3
         """
-        assert action in self.action_space, "Invalid Action"
+        #
+        if action == "Right":
+            if agent.location == loc_A:
+                agent.location = loc_B
+                agent.performance -= 1  
+        elif action == "Left":
+            if agent.location == loc_B:
+                agent.location = loc_A
+                agent.performance -= 1  
+        elif action == "Suck":
+            if self.status[agent.location] == "Dirty":
+                self.status[agent.location] = "Clean"  
+                agent.performance += 7  
+            else:
+                agent.performance -= 3  
+        elif action == "Stay":
+            pass  
+        else:
+            raise ValueError(f"Invalid action: {action}")
 
-        ...
+        assert action in self.action_space, f"Invalid Action: {action}"
 
     def random_agent(self, agent: Agent) -> str:
         """
@@ -81,7 +99,8 @@ class TrivialVacuumEnvironment:
         >>> action = env.random_agent(agent)
         >>> assert action in env.action_space
         """
-        ...
+        #
+        return random.choice(self.action_space)
 
     def reflex_agent(self, agent: Agent) -> str:
         """
@@ -112,7 +131,13 @@ class TrivialVacuumEnvironment:
         >>> env.execute_action(agent, action)
         >>> assert agent.location == loc_A
         """
-        ...
+        #
+        if self.status[agent.location] == "Dirty":
+            return "Suck"
+        elif agent.location == loc_A:
+            return "Right"
+        else:
+            return "Left"
 
     def model_based_agent(self, agent: AgentMemory) -> str:
         """
@@ -148,4 +173,23 @@ class TrivialVacuumEnvironment:
         >>> action = env.model_based_agent(agent)
         >>> assert action == 'Stay', f"agent should stay at B since both locations are clean, however your action is {action}"
         """
-        ...
+        #
+        if agent.location not in agent.visited:
+            agent.visited[agent.location] = self.status[agent.location]
+
+        if self.status[agent.location] == "Dirty":
+            return "Suck"
+
+        if self.status[loc_A] == "Clean" and self.status[loc_B] == "Clean":
+            if agent.location == loc_A and loc_B not in agent.visited:
+                return "Right"
+            elif agent.location == loc_B and loc_A not in agent.visited:
+                return "Left"
+            return "Stay"
+
+        if agent.location == loc_A and (loc_B not in agent.visited or self.status[loc_B] == "Dirty"):
+            return "Right"
+        elif agent.location == loc_B and (loc_A not in agent.visited or self.status[loc_A] == "Dirty"):
+            return "Left"
+
+        return "Stay"

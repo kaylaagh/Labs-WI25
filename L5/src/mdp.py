@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from src.maze_env import MazeEnv
 from typing import List, Callable, Tuple
 import matplotlib.animation as animation
+import random
 
 # Define the states and possible actions
 states = np.arange(1, 6)  # States 1 through 5
@@ -22,7 +23,12 @@ def transition(state, action):
     int: The next state.
     """
     # TODO: Your code here
-    ...
+    if action == "left":
+        return max(1, state - 1)
+    elif action == "right":
+        return min(5, state + 1)
+    else:  
+        return state
 
 
 def reward(state, action):
@@ -37,7 +43,13 @@ def reward(state, action):
     int: The reward.
     """
     # TODO: Your code here
-    ...
+    if state == 4 and action == "right":
+        return 10  
+    elif state == 5:
+        return 0  
+    else:
+        return -1
+
 
 
 
@@ -66,7 +78,9 @@ def my_policy(state):
     str: The action chosen by the policy.
     """
     # TODO: Your code here
-    ...
+    if state < 5:
+        return "right"
+    return "stay"
 
         
 def simulate_mdp(policy: Callable, initial_state=1, simulation_depth=20):
@@ -94,15 +108,32 @@ def simulate_mdp(policy: Callable, initial_state=1, simulation_depth=20):
     
     for _ in range(simulation_depth):
         # TODO: Your code here
-        ...
+        if current_state == 5:  
+            break
 
-    
+        action = policy(current_state)
+        next_state = transition(current_state, action)
+        
+        r = reward(current_state, action)
+
+        state_visits[current_state - 1] += 1  
+        cumulative_reward += r
+        reward_history.append(r)
+        visited_history.append(next_state)
+
+        current_state = next_state
+
     return state_visits, cumulative_reward, visited_history, reward_history
 
 
 def new_policy(state: List[int]) -> int:
     # TODO: Your code here
-    ...
+    y = state[-1]  # Extract the y-coordinate
+    
+    if y < 3:
+        return 0 if random.random() < 0.7 else 1  
+    else:
+        return 3 if random.random() < 0.7 else 2
 
         
 def simulate_maze_env(env: MazeEnv, policy: Callable, num_steps=20):
@@ -124,8 +155,12 @@ def simulate_maze_env(env: MazeEnv, policy: Callable, num_steps=20):
 
     for _ in range(num_steps):
         # TODO: Your code here
-        ...
-
+        action = policy(state)
+        state, reward, done, _ = env.step(action)
+        total_reward += reward
+        path.append(state)
+        if done:
+            break
 
     return path, total_reward
 
@@ -144,13 +179,24 @@ def q_learning(env: MazeEnv, episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1) -
     Returns:
         np.ndarray: The learned Q-table.
     """
-    q_table = ... # TODO: Your code here
+    q_table = np.zeros((env.size, env.size, env.action_space.n))  # TODO: Your code here
 
 
     for episode in range(episodes):
         # TODO: Your code here
-        ...
+        state = env.reset()
+        done = False
 
+        while not done:
+            if np.random.rand() < epsilon:
+                action = env.action_space.sample()
+            else:
+                action = np.argmax(q_table[state])
+
+            next_state, reward, done, _ = env.step(action)
+
+            q_table[state][action] += alpha * (reward + gamma * np.max(q_table[next_state]) - q_table[state][action])
+            state = next_state
 
     return q_table
 

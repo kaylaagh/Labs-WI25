@@ -55,7 +55,17 @@ def is_safe_row_diag(board, row, col) -> bool:
     return: bool, True if it's safe to place a queen, False otherwise
     """
     # TODO
-
+    n = len(board)
+    for i in range(col):
+        if board[row][i] == 1:
+            return False
+    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+        if board[i][j] == 1:
+            return False
+    for i, j in zip(range(row, n), range(col, -1, -1)):
+        if board[i][j] == 1:
+            return False
+    return True
 
 def solve_8_queens(board: List[List[int]], col: int) -> bool:
     """
@@ -71,6 +81,16 @@ def solve_8_queens(board: List[List[int]], col: int) -> bool:
         bool: whether the solution exists
     """
     # TODO
+    n = len(board)  
+    if col >= n:
+        return True
+    for row in range(n):
+        if is_safe_row_diag(board, row, col):  
+            board[row][col] = 1  
+            if solve_8_queens(board, col + 1):
+                return True
+            board[row][col] = 0
+    return False
 
 
 def update_board():
