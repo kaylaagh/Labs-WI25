@@ -36,7 +36,7 @@ The Windy Cliff World is a grid world environment where an agent must reach a go
 1. **Implement Q-Learning Algorithm:**
    - Open the `windy_cliff.py` file.
    - Implement the Q-learning algorithm in the `q_learning` function.
-   - Initialize the Q-table with zeros.
+   - Initialize the Q-ta./ble with zeros.
    - For each episode:
      - Initialize the state.
      - Choose an action using an epsilon-greedy policy.

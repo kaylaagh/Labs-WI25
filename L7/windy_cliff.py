@@ -92,14 +92,60 @@ def q_learning(env, num_episodes, alpha, gamma, epsilon):
     q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
     # TODO: Implement Q-learning algorithm
-    
+    rewards_per_episode = []
+
+    q_table = np.zeros([env.observation_space.n, env.action_space.n])
+    rewards_per_episode = []
+
+    for episode in range(num_episodes):
+        state = env.reset() 
+        done = False
+        total_reward = 0
+
+        while not done:
+            if np.random.rand() < epsilon:
+                action = np.random.choice(env.action_space.n)
+            else:
+                action = np.argmax(q_table[state])
+
+            next_state, reward, done, _ = env.step(action)
+            total_reward += reward
+
+            
+            q_table[state, action] += alpha * (reward + gamma * np.max(q_table[next_state]) - q_table[state, action])
+
+            state = next_state
+
+        rewards_per_episode.append(total_reward)
     return q_table
 
 def sarsa(env, num_episodes, alpha, gamma, epsilon):
     q_table = np.zeros([env.observation_space.n, env.action_space.n])
 
     # TODO: Implement SARSA algorithm
-    
+    rewards_per_episode = []
+
+    q_table = np.zeros([env.observation_space.n, env.action_space.n])
+    rewards_per_episode = []
+
+    for episode in range(num_episodes):
+        state = env.reset()  
+        action = np.random.choice(env.action_space.n) if np.random.rand() < epsilon else np.argmax(q_table[state])
+        done = False
+        total_reward = 0
+
+        while not done:
+            next_state, reward, done, _ = env.step(action)
+            total_reward += reward
+
+            next_action = np.random.choice(env.action_space.n) if np.random.rand() < epsilon else np.argmax(q_table[next_state])
+
+            # SARSA update rule
+            q_table[state, action] += alpha * (reward + gamma * q_table[next_state, next_action] - q_table[state, action])
+
+            state, action = next_state, next_action
+
+        rewards_per_episode.append(total_reward)
     return q_table
 
 def save_gif(frames, path='./', filename='gym_animation.gif'):
@@ -125,12 +171,47 @@ q_table = q_learning(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
 visualize_policy(env, q_table, filename='q_learning_windy_cliff.gif')
 
 # Testing SARSA
-# env = WindyCliffWorld()
-# q_table = sarsa(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
-# visualize_policy(env, q_table, filename='sarsa_windy_cliff.gif')
+env = WindyCliffWorld()
+q_table = sarsa(env, num_episodes=500, alpha=0.1, gamma=0.99, epsilon=0.1)
+visualize_policy(env, q_table, filename='sarsa_windy_cliff.gif')
 
 # TODO: Run experiments with different hyperparameters and visualize the results
 # You should generate two plots:
 # 1. Total reward over episodes for different α and ε values for Q-learning
 # 2. Total reward over episodes for different α and ε values for SARSA
 # For each plot, use at least 2 different values for α and 2 different values for ε
+
+def plot_rewards():
+    """Generates and saves reward plots for different hyperparameters."""
+    alphas = [0.1, 0.5]
+    epsilons = [0.1, 0.5]
+
+    # Q-Learning 
+    plt.figure(figsize=(10, 5))
+    for alpha in alphas:
+        for epsilon in epsilons:
+            rewards_q = q_learning(env, num_episodes=500, alpha=alpha, gamma=0.99, epsilon=epsilon) 
+            plt.plot(rewards_q, label=f'Q-Learning α={alpha}, ε={epsilon}')
+
+    plt.xlabel("Episodes")
+    plt.ylabel("Total Reward")
+    plt.title("Q-Learning Performance with Different Hyperparameters")
+    plt.legend()
+    plt.savefig("q_learning_windy_cliff_hyperparameters.png")  
+    plt.show()
+
+    # SARSA 
+    plt.figure(figsize=(10, 5))
+    for alpha in alphas:
+        for epsilon in epsilons:
+            rewards_sarsa = sarsa(env, num_episodes=500, alpha=alpha, gamma=0.99, epsilon=epsilon)  
+            plt.plot(rewards_sarsa, label=f'SARSA α={alpha}, ε={epsilon}')
+
+    plt.xlabel("Episodes")
+    plt.ylabel("Total Reward")
+    plt.title("SARSA Performance with Different Hyperparameters")
+    plt.legend()
+    plt.savefig("sarsa_windy_cliff_hyperparameters.png")  
+    plt.show()
+
+plot_rewards()
